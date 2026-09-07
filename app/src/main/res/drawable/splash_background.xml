@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/pure_white" />
+
+    <!-- Optional: Red accent bottom bar (NYC touch) -->
+    <item
+        android:drawable="@color/nyc_red"
+        android:bottom="0dp"
+        android:height="6dp"
+        android:gravity="bottom" />
+</layer-list>

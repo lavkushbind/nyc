@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ============================================= -->
+    <!-- 🟥 BRAND COLORS (NYC RED FAMILY)              -->
+    <!-- ============================================= -->
+
+    <!-- Primary Brand Red - Main Buttons, Icons, Highlights, Tabs -->
+    <color name="nyc_red">#E63946</color>
+
+    <!-- Dark Red - Pressed state of buttons, heavy accents -->
+    <color name="nyc_red_dark">#C1121F</color>
+
+    <!-- Light Red - Badges, Unread indicators, Soft highlights -->
+    <color name="nyc_red_light">#FF6B7A</color>
+
+    <!-- Red Surface - Very light red tint (Chips, "Liked" background, notification dots) -->
+    <color name="nyc_red_surface">#FFF0F1</color>
+
+
+    <!-- ============================================= -->
+    <!-- ⬜ BACKGROUND & SURFACE (WHITE FAMILY)        -->
+    <!-- ============================================= -->
+
+    <!-- Pure White - Main App Background -->
+    <color name="pure_white">#FFFFFFFF</color>
+
+    <!-- Off White - Card Backgrounds, Bottom Sheets, Dialogs -->
+    <color name="off_white">#F8F9FA</color>
+
+    <!-- Soft Gray - Input field backgrounds, Dividers, Disabled states -->
+    <color name="soft_gray">#F1F3F5</color>
+
+
+    <!-- ============================================= -->
+    <!-- ✏️ TEXT COLORS (Solid Grays for Readability)  -->
+    <!-- ============================================= -->
+
+    <!-- Primary Text - Almost Black (Headlines, Names, Big Titles) -->
+    <color name="text_primary">#1A1A1A</color>
+
+    <!-- Secondary Text - Dark Gray (Subheadings, Bios, Descriptions) -->
+    <color name="text_secondary">#495057</color>
+
+    <!-- Hint Text - Light Gray (Placeholders, Timestamps, Disabled text) -->
+    <color name="text_hint">#ADB5BD</color>
+
+    <!-- Inverse Text - Pure White (Used only on Red backgrounds / Buttons) -->
+    <color name="text_inverse">#FFFFFFFF</color>
+
+
+    <!-- ============================================= -->
+    <!-- 🛡️ BORDERS & STROKES                          -->
+    <!-- ============================================= -->
+
+    <!-- Light Border - Default input field borders, dividers, separators -->
+    <color name="border_light">#E9ECEF</color>
+
+    <!-- Red Border - Focused input fields, Important boundaries, Error outlines -->
+    <color name="border_red">#E63946</color>
+
+
+    <!-- ============================================= -->
+    <!-- 📊 STATUS & FEEDBACK (Solid Colors)           -->
+    <!-- ============================================= -->
+
+    <!-- Success / Online Status - Teal Green (Verified badges, Active status) -->
+    <color name="status_green">#2EC4B6</color>
+
+    <!-- Warning / Pending - Orange (Pending requests, Waiting states) -->
+    <color name="status_warning">#FF9F1C</color>
+
+    <!-- Error / Decline - Deep Red (Errors, Decline buttons, Delete actions) -->
+    <color name="status_error">#D62828</color>
+
+
+    <!-- ============================================= -->
+    <!-- 🎨 SHADOWS & OVERLAYS                         -->
+    <!-- ============================================= -->
+
+    <!-- Light Shadow - 10% Black opacity for card elevation drops -->
+    <color name="shadow_light">#1A000000</color>
+
+    <!-- Overlay Dark - 50% Black for modals/dim backgrounds -->
+    <color name="overlay_dark">#80000000</color>
+
+</resources>
