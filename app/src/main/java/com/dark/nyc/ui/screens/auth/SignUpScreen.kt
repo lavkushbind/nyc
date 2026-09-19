@@ -87,10 +87,6 @@ fun SignUpScreen(
         gso
     )
 
-    // Google Sign-In Launcher (Activity Result) - Isko MainActivity me define karke yahan pass karna hoga
-    // For simplicity, I'm using a lambda that expects the launcher.
-    // Actual implementation: MainActivity me registerForActivityResult launcher banake yahan call karo.
-
     // ===== UI RENDER =====
     Column(
         modifier = Modifier
@@ -436,8 +432,9 @@ fun SignUpScreen(
             )
             TextButton(
                 onClick = {
-                    // TODO: Navigate to Login Screen
-                    Toast.makeText(context, "Login Screen coming soon", Toast.LENGTH_SHORT).show()
+                    navController.navigate("login") {
+                        popUpTo("signup") { inclusive = true }
+                    }
                 }
             ) {
                 Text(

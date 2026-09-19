@@ -171,7 +171,7 @@ fun ChatListScreen(
                 border = BorderStroke(1.dp, NYC_Red.copy(alpha = 0.3f))
             ) {
                 Text(
-                    text = "Lovora Direct",
+                    text = "Sway Direct",
                     color = NYC_RedDark,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,

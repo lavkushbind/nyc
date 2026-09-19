@@ -22,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.dark.nyc.ui.navigation.Screen
+import com.dark.nyc.ui.screens.auth.LoginScreen
 import com.dark.nyc.ui.screens.auth.SignUpScreen
 import com.dark.nyc.ui.screens.home.HomeScreen
 import com.dark.nyc.ui.screens.onboarding.OnboardingScreen
@@ -163,6 +164,29 @@ class MainActivity : ComponentActivity() {
                     },
                     onGoogleSignInClick = {
                         launchGoogleSignIn()
+                    }
+                )
+            }
+
+            composable("login") {
+                LoginScreen(
+                    navController = navController,
+                    onLoginSuccess = { isOnboardingComplete ->
+                        if (isOnboardingComplete) {
+                            navController.navigate("home") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate("onboarding") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        }
+                    },
+                    onGoogleSignInClick = {
+                        launchGoogleSignIn()
+                    },
+                    onNavigateToSignUp = {
+                        navController.navigate("signup")
                     }
                 )
             }

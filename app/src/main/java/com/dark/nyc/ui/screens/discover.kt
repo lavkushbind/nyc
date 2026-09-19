@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -52,7 +53,7 @@ fun DiscoverScreen(
     // State Variables
     var searchQuery by remember { mutableStateOf("") }
     var selectedVibe by remember { mutableStateOf("All") }
-    var selectedBorough by remember { mutableStateOf("All") }
+    var selectedBorough by remember { mutableStateOf("All NYC") }
 
     val allUsers = remember { mutableStateListOf<NYCUser>() }
     var isLoading by remember { mutableStateOf(true) }
@@ -60,31 +61,30 @@ fun DiscoverScreen(
     // Inspect Profile State
     var inspectingUser by remember { mutableStateOf<NYCUser?>(null) }
 
-    // Vibe Categories Matching Onboarding Personality Tags
     val vibeCategories = listOf(
         VibeCategory("✨ All Vibes", "All"),
         VibeCategory("☕ Coffee Lovers", "Coffee"),
         VibeCategory("🌃 Night Owls", "Night owl"),
-        VibeCategory("🏋️ Gym & Fitness", "Gym"),
+        VibeCategory("🏋️ Fitness", "Gym"),
         VibeCategory("🍜 Foodies", "Food"),
-        VibeCategory("🎵 Live Music", "Music"),
-        VibeCategory("🎨 Creative Souls", "Creative"),
-        VibeCategory("🐶 Dog Lovers", "Dog"),
-        VibeCategory("☀️ Brunch Club", "Brunch")
+        VibeCategory("🎵 Music", "Music"),
+        VibeCategory("🎨 Creatives", "Creative"),
+        VibeCategory("🐶 Pet Lovers", "Dog"),
+        VibeCategory("☀️ Brunch", "Brunch")
     )
 
     val boroughs = listOf("All NYC", "Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island")
 
-    // 1️⃣ FETCH ALL USERS FROM FIRESTORE (Real-time)
+    // Real-time Firestore Listener
     DisposableEffect(currentUserId) {
         val listener = firestore.collection("nyc_users")
-            .addSnapshotListener { snapshot, error ->
+            .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null) {
                     val users = snapshot.documents.mapNotNull { doc ->
                         doc.toObject(NYCUser::class.java)?.let { u ->
                             if (u.uid.isBlank()) u.copy(uid = doc.id) else u
                         }
-                    }.filter { it.uid != currentUserId } // Exclude self
+                    }.filter { it.uid != currentUserId }
 
                     allUsers.clear()
                     allUsers.addAll(users)
@@ -95,20 +95,17 @@ fun DiscoverScreen(
         onDispose { listener.remove() }
     }
 
-    // 2️⃣ FILTER LOGIC (Dynamic & Reactive)
+    // Dynamic Filter Logic
     val filteredProfiles = remember(allUsers.toList(), selectedVibe, selectedBorough, searchQuery) {
         allUsers.filter { user ->
-            // Search Query Filter
             val matchesSearch = searchQuery.isBlank() ||
                     user.name.contains(searchQuery, ignoreCase = true) ||
                     user.neighborhood.contains(searchQuery, ignoreCase = true) ||
                     user.bio.contains(searchQuery, ignoreCase = true)
 
-            // Borough Filter
             val matchesBorough = selectedBorough == "All NYC" ||
                     user.borough.equals(selectedBorough, ignoreCase = true)
 
-            // Vibe / Personality Tag Filter
             val matchesVibe = if (selectedVibe == "All") {
                 true
             } else {
@@ -120,140 +117,178 @@ fun DiscoverScreen(
         }
     }
 
-    Scaffold(
-        containerColor = PureWhite
-    ) { paddingValues ->
+    // 🚀 FIXED: Nested Scaffold removed to eliminate excessive top margin/gap
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF9FAFB))
+    ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier = Modifier.fillMaxSize()
         ) {
-            // --- HEADER TITLE (Lovora Clean UI) ---
-            Column(
+            // --- TOP COMPACT APP BAR (Like reference screenshot) ---
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                    .background(Color.White)
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "DISCOVER BY VIBE",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = NYC_Red,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Column {
                     Text(
-                        text = "Explore Lovora",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextPrimary
+                        text = "Discover",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E2022),
+                        letterSpacing = (-0.5).sp
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("🗽", fontSize = 22.sp)
+                    Text(
+                        text = "Find your vibe in NYC",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF9E9EA7)
+                    )
                 }
-                Text(
-                    text = "Filter NYC members by interests, energy & borough",
-                    fontSize = 13.sp,
-                    color = TextSecondary
-                )
 
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Search Bar
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search by name, interests or area...", fontSize = 14.sp) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear", tint = TextSecondary)
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = NYC_Red,
-                        unfocusedBorderColor = BorderLight,
-                        focusedContainerColor = OffWhite,
-                        unfocusedContainerColor = OffWhite
-                    )
-                )
+                // Compact Location Filter Chip
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFFF4F5F7),
+                    modifier = Modifier.clickable {
+                        val nextIdx = (boroughs.indexOf(selectedBorough) + 1) % boroughs.size
+                        selectedBorough = boroughs[nextIdx]
+                    }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = NYC_Red,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = selectedBorough,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF2D3142)
+                        )
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = Color(0xFF9E9EA7),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
             }
 
-            // --- VIBE CATEGORY PILLS (Horizontal Scroll) ---
+            // --- COMPACT SEARCH BAR ---
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(horizontal = 20.dp, vertical = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                        .clip(RoundedCornerShape(21.dp))
+                        .background(Color(0xFFF4F5F7))
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = Color(0xFFA0A3BD),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        decorationBox = { innerTextField ->
+                            if (searchQuery.isEmpty()) {
+                                Text(
+                                    "Search by name, area or vibe...",
+                                    fontSize = 13.sp,
+                                    color = Color(0xFFA0A3BD)
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                    if (searchQuery.isNotEmpty()) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear",
+                            tint = Color(0xFFA0A3BD),
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clickable { searchQuery = "" }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // --- VIBE CHIPS ROW ---
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(bottom = 8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(vibeCategories) { vibe ->
                     val isSelected = selectedVibe == vibe.filterKey
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(50.dp))
-                            .background(if (isSelected) NYC_Red else OffWhite)
-                            .border(1.2.dp, if (isSelected) NYC_Red else BorderLight, RoundedCornerShape(50.dp))
+                            .background(if (isSelected) NYC_Red else Color.White)
+                            .border(
+                                width = 1.dp,
+                                color = if (isSelected) NYC_Red else Color(0xFFEBECEF),
+                                shape = RoundedCornerShape(50.dp)
+                            )
                             .clickable { selectedVibe = vibe.filterKey }
-                            .padding(horizontal = 14.dp, vertical = 9.dp)
+                            .padding(horizontal = 14.dp, vertical = 7.dp)
                     ) {
                         Text(
                             text = vibe.title,
-                            color = if (isSelected) Color.White else TextPrimary,
+                            color = if (isSelected) Color.White else Color(0xFF4A4E69),
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            fontSize = 12.5.sp
+                            fontSize = 12.sp
                         )
                     }
                 }
             }
 
-            // --- BOROUGH FILTER PILLS ---
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.padding(bottom = 12.dp)
-            ) {
-                items(boroughs) { b ->
-                    val isSelected = selectedBorough == b
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50.dp))
-                            .background(if (isSelected) NYC_RedSurface else PureWhite)
-                            .border(1.dp, if (isSelected) NYC_Red else BorderLight, RoundedCornerShape(50.dp))
-                            .clickable { selectedBorough = b }
-                            .padding(horizontal = 12.dp, vertical = 5.dp)
-                    ) {
-                        Text(
-                            text = b,
-                            fontSize = 11.5.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) NYC_RedDark else TextSecondary
-                        )
-                    }
-                }
-            }
-
-            // Active Filter Result Count Bar
+            // --- RESULT COUNT & RESET BAR ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 4.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${filteredProfiles.size} Locals Found",
-                    fontSize = 13.sp,
+                    text = "${filteredProfiles.size} Profiles Nearby",
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = Color(0xFF4A4E69)
                 )
 
                 if (selectedVibe != "All" || selectedBorough != "All NYC" || searchQuery.isNotEmpty()) {
                     Text(
-                        text = "Reset Filters",
+                        text = "Reset",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = NYC_Red,
@@ -266,58 +301,40 @@ fun DiscoverScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
-
             // --- USER PROFILES GRID ---
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = NYC_Red, strokeWidth = 3.dp)
+                    CircularProgressIndicator(color = NYC_Red, strokeWidth = 2.5.dp, modifier = Modifier.size(32.dp))
                 }
             } else if (filteredProfiles.isEmpty()) {
-                // Empty Search State
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(32.dp)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(80.dp)
-                                .background(NYC_RedSurface, CircleShape),
+                                .size(64.dp)
+                                .background(NYC_Red.copy(alpha = 0.08f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.PersonSearch, contentDescription = null, tint = NYC_Red, modifier = Modifier.size(40.dp))
+                            Icon(Icons.Outlined.PersonSearch, contentDescription = null, tint = NYC_Red, modifier = Modifier.size(32.dp))
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("No Profiles Found", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("No Profiles Found", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E2022))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "No one matches this specific vibe right now. Try selecting another filter or borough!",
-                            fontSize = 13.sp,
-                            color = TextSecondary,
+                            text = "Try switching your vibe filter or borough",
+                            fontSize = 12.sp,
+                            color = Color(0xFF9E9EA7),
                             textAlign = TextAlign.Center
                         )
-                        Spacer(modifier = Modifier.height(18.dp))
-                        Button(
-                            onClick = {
-                                selectedVibe = "All"
-                                selectedBorough = "All NYC"
-                                searchQuery = ""
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = NYC_Red),
-                            shape = RoundedCornerShape(20.dp)
-                        ) {
-                            Text("Clear Filters", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
                     }
                 }
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
@@ -333,12 +350,21 @@ fun DiscoverScreen(
             }
         }
 
-        // --- FULL DETAILED USER BOTTOMSHEET ---
+        // --- USER PROFILE BOTTOM SHEET ---
         if (inspectingUser != null) {
             ModalBottomSheet(
                 onDismissRequest = { inspectingUser = null },
-                containerColor = PureWhite,
-                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+                containerColor = Color.White,
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                dragHandle = {
+                    Box(
+                        modifier = Modifier
+                            .padding(vertical = 10.dp)
+                            .size(width = 38.dp, height = 4.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFE0E0E6))
+                    )
+                }
             ) {
                 DiscoverUserDetailSheet(
                     user = inspectingUser!!,
@@ -354,7 +380,7 @@ fun DiscoverScreen(
 }
 
 // ==========================================
-// 1️⃣ DISCOVER USER CARD (SOLID NO BLEED)
+// 1️⃣ DISCOVER USER CARD (CLEAN MODERN UI)
 // ==========================================
 @Composable
 fun DiscoverUserCard(
@@ -363,16 +389,20 @@ fun DiscoverUserCard(
     onChatClick: () -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(270.dp)
-            .shadow(6.dp, RoundedCornerShape(20.dp), spotColor = Color.Black.copy(alpha = 0.08f))
+            .height(255.dp)
+            .shadow(
+                elevation = 6.dp,
+                shape = RoundedCornerShape(22.dp),
+                spotColor = Color(0x1A000000)
+            )
             .clickable { onCardClick() },
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF16161A)) // Solid background
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24))
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // User Photo
+            // Profile Image
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(user.photoURL)
@@ -381,90 +411,108 @@ fun DiscoverUserCard(
                 contentDescription = user.name,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-                loading = { CircularProgressIndicator(color = NYC_Red, strokeWidth = 2.dp) },
+                loading = {
+                    Box(Modifier.fillMaxSize().background(Color(0xFFE5E7EB)), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = NYC_Red, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
+                    }
+                },
                 error = {
                     Box(Modifier.fillMaxSize().background(Color(0xFFEEEEF2)), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(48.dp))
+                        Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(40.dp))
                     }
                 }
             )
 
-            // Gradient Overlay
+            // Modern Smooth Gradient
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)),
-                            startY = 220f
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.15f),
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.85f)
+                            ),
+                            startY = 0f,
+                            endY = Float.POSITIVE_INFINITY
                         )
                     )
             )
 
-            // Top Energy Tag
+            // Top Status Badge
             Surface(
                 shape = RoundedCornerShape(50.dp),
-                color = Color.Black.copy(alpha = 0.6f),
+                color = Color.Black.copy(alpha = 0.45f),
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(8.dp)
+                    .padding(10.dp)
             ) {
                 Text(
-                    text = user.nycEnergy.ifBlank { "Chill Local" },
+                    text = user.nycEnergy.ifBlank { "NYC Local" },
                     color = Color.White,
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                 )
             }
 
-            // Bottom Profile Info & Direct Chat CTA
-            Column(
+            // Bottom Profile Info & Chat Action
+            Row(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(12.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "${user.name}, ${user.age}",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Column(modifier = Modifier.weight(1f).padding(end = 6.dp)) {
+                    Text(
+                        text = "${user.name}, ${user.age}",
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.85f),
+                            modifier = Modifier.size(11.dp)
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(
+                            text = user.neighborhood.ifBlank { user.borough },
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
 
-                Text(
-                    text = "📍 ${user.neighborhood.ifBlank { user.borough }}",
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Direct Chat Button
-                Row(
+                // Reference Mockup Style Rounded Chat Button
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(34.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(NYC_Red)
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                listOf(NYC_Red, Color(0xFFFF5277))
+                            )
+                        )
                         .clickable { onChatClick() },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Filled.ChatBubble,
-                        contentDescription = null,
+                        contentDescription = "Chat",
                         tint = Color.White,
-                        modifier = Modifier.size(13.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Say Hi 👋",
-                        color = Color.White,
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
@@ -473,7 +521,7 @@ fun DiscoverUserCard(
 }
 
 // ==========================================
-// 2️⃣ DETAILED PROFILE BOTTOM SHEET
+// 2️⃣ MODERN PROFILE BOTTOM SHEET
 // ==========================================
 @Composable
 fun DiscoverUserDetailSheet(
@@ -484,16 +532,16 @@ fun DiscoverUserDetailSheet(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
-            .padding(bottom = 36.dp)
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 32.dp)
     ) {
-        // Image Header
+        // Clean Profile Image
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(340.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFF1E1E24))
+                .height(300.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .background(Color(0xFFF3F4F6))
         ) {
             SubcomposeAsyncImage(
                 model = user.photoURL,
@@ -503,92 +551,110 @@ fun DiscoverUserDetailSheet(
             )
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
+        // Title and Borough
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("${user.name}, ${user.age}", fontSize = 24.sp, fontWeight = FontWeight.Black, color = TextPrimary)
-                Text("📍 ${user.neighborhood}, ${user.borough}", fontSize = 14.sp, color = TextSecondary)
+            Column {
+                Text(
+                    text = "${user.name}, ${user.age}",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E2022)
+                )
+                Text(
+                    text = "📍 ${user.neighborhood}, ${user.borough}",
+                    fontSize = 13.sp,
+                    color = Color(0xFF6C757D)
+                )
             }
 
             Surface(
                 shape = RoundedCornerShape(50.dp),
-                color = NYC_RedSurface
+                color = NYC_Red.copy(alpha = 0.1f)
             ) {
                 Text(
-                    text = "⚡ ${user.nycEnergy.ifBlank { "Chill Local" }}",
-                    fontWeight = FontWeight.Bold,
-                    color = NYC_RedDark,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    text = user.nycEnergy.ifBlank { "Chill Local" },
+                    fontWeight = FontWeight.SemiBold,
+                    color = NYC_Red,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         if (user.bio.isNotBlank()) {
-            Text("About Me", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Text("About", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E2022))
             Spacer(modifier = Modifier.height(4.dp))
-            Text(user.bio, fontSize = 14.sp, color = TextSecondary, lineHeight = 20.sp)
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = user.bio,
+                fontSize = 13.5.sp,
+                color = Color(0xFF4A4E69),
+                lineHeight = 19.sp
+            )
+            Spacer(modifier = Modifier.height(14.dp))
         }
 
         if (user.unpopularOpinion.isNotBlank()) {
-            Text("NYC Hot Take 🔥", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = NYC_Red)
+            Text("NYC Hot Take 🔥", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = NYC_Red)
             Spacer(modifier = Modifier.height(4.dp))
-            Card(
-                colors = CardDefaults.cardColors(containerColor = OffWhite),
-                shape = RoundedCornerShape(16.dp),
+            Surface(
+                color = Color(0xFFF8F9FA),
+                shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
                     text = "\"${user.unpopularOpinion}\"",
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontStyle = FontStyle.Italic,
-                    color = TextPrimary,
-                    modifier = Modifier.padding(14.dp)
+                    color = Color(0xFF2D3142),
+                    modifier = Modifier.padding(12.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
         }
 
         if (user.personalityTags.isNotEmpty()) {
-            Text("Interests & Vibe", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Text("Interests", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E2022))
             Spacer(modifier = Modifier.height(8.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(user.personalityTags) { tag ->
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(50.dp))
-                            .background(OffWhite)
-                            .border(1.dp, BorderLight, RoundedCornerShape(50.dp))
-                            .padding(horizontal = 12.dp, vertical = 7.dp)
+                            .background(Color(0xFFF1F3F5))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Text(tag, fontSize = 12.sp, color = TextPrimary, fontWeight = FontWeight.Medium)
+                        Text(
+                            text = tag,
+                            fontSize = 11.5.sp,
+                            color = Color(0xFF495057),
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(26.dp))
+        Spacer(modifier = Modifier.height(22.dp))
 
-        // Start Chat CTA
         Button(
             onClick = onStartChat,
             colors = ButtonDefaults.buttonColors(containerColor = NYC_Red),
-            shape = RoundedCornerShape(22.dp),
+            shape = RoundedCornerShape(20.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .height(48.dp)
         ) {
-            Icon(Icons.Filled.ChatBubble, contentDescription = null, tint = Color.White)
+            Icon(Icons.Filled.ChatBubble, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Send Message to ${user.name} 💬", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text("Send Message", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
         }
     }
 }
